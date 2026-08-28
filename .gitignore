@@ -1,0 +1,11 @@
+node_modules/
+.env
+coverage/
+ml-service/models/*.joblib
+!ml-service/models/.gitkeep
+__pycache__/
+*.py[cod]
+.pytest_cache/
+ml-service/.runtime/
+ml-service/.runtime*/
+ml-service/*.log
