@@ -1,4 +1,5 @@
 const predictionService = require('../services/predictionService');
+const csvPredictionService = require('../services/csvPredictionService');
 const { success } = require('../utils/response');
 
 async function create(req, res, next) {
@@ -12,10 +13,18 @@ async function create(req, res, next) {
   } catch (error) { return next(error); }
 }
 
+async function batch(req, res, next) {
+  try {
+    const model = String(req.query.model || 'random_forest');
+    const result = await csvPredictionService.predictCsv(req.csvText, model);
+    return success(res, { message: 'CSV batch test completed', data: result });
+  } catch (error) { return next(error); }
+}
+
 async function list(req, res, next) {
   try { const result = await predictionService.listPredictions(req.query); return success(res, { data: result.data, pagination: result.pagination }); } catch (error) { return next(error); }
 }
 async function getOne(req, res, next) { try { return success(res, { data: await predictionService.getPrediction(req.params.id) }); } catch (error) { return next(error); } }
 async function remove(req, res, next) { try { await predictionService.deletePrediction(req.params.id); return success(res, { message: 'Prediction deleted successfully' }); } catch (error) { return next(error); } }
 
-module.exports = { create, list, getOne, remove };
+module.exports = { create, batch, list, getOne, remove };
