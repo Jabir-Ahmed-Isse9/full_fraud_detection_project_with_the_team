@@ -6,10 +6,11 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const predictionRoutes = require('./routes/predictionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const modelRoutes = require('./routes/modelRoutes');
 const { databaseStatus } = require('./config/db');
 const mlService = require('./services/mlService');
 const { env } = require('./config/env');
-const { success } = require('./utils/response');
 const notFound = require('./middleware/notFoundMiddleware');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
@@ -26,9 +27,14 @@ app.get('/api/health', async (req, res) => {
   const ml = await mlService.health();
   const mongodb = databaseStatus();
   const mlStatus = ml.status === 'healthy' ? 'connected' : 'unavailable';
-  return success(res, { status: mongodb === 'connected' && mlStatus === 'connected' ? 200 : 503, data: undefined, ...{
-    backend: 'healthy', mongodb, mlService: mlStatus,
-  } });
+  const healthy = mongodb === 'connected' && mlStatus === 'connected';
+  return res.status(healthy ? 200 : 503).json({
+    success: healthy,
+    status: healthy ? 'ok' : 'degraded',
+    backend: 'healthy',
+    mongodb,
+    mlService: mlStatus,
+  });
 });
 app.get('/api/ml/health', async (req, res) => {
   const ml = await mlService.health();
@@ -36,6 +42,8 @@ app.get('/api/ml/health', async (req, res) => {
 });
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/models', modelRoutes);
 app.use(notFound);
 app.use(errorMiddleware);
 

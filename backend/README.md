@@ -30,10 +30,8 @@ npm run dev
 ```bash
 cd ml-service
 python -m pip install -r requirements.txt
-python run_service.py
+   python run_service.py
 ```
-
-`run_service.py` uses the local `.runtime` folder when present and starts FastAPI on `127.0.0.1:8000`. If the service is already running, it reports that and exits cleanly. Set `ML_SERVICE_PORT` to use another port. For a normal Python environment, installing `requirements.txt` first is sufficient.
 
 5. Start MongoDB locally (or provide an Atlas `MONGODB_URI`) and start the React application as usual.
 
@@ -56,12 +54,19 @@ python run_service.py
 | GET | `/api/health` | Backend, database, and ML connectivity |
 | GET | `/api/ml/health` | Joblib model load status |
 | POST | `/api/predictions` | Predict and persist a transaction |
+| POST | `/api/predictions/csv?model=random_forest` | Test up to 500 CSV rows without saving them to history |
 | GET | `/api/predictions` | Paginated/filterable prediction history |
 | GET | `/api/predictions/:id` | One prediction record |
 | DELETE | `/api/predictions/:id` | Delete one history item |
 | GET | `/api/dashboard/summary` | Dashboard totals |
 | GET | `/api/dashboard/charts` | Chart-ready aggregate arrays |
 | GET | `/api/dashboard/models` | Configured actual evaluation metrics |
+| GET | `/api/analytics/dashboard` | Central MongoDB-backed dashboard analytics |
+| GET | `/api/analytics/dataset` | Dataset analytics for saved predictions |
+| GET | `/api/analytics/risk` | Risk distribution |
+| GET | `/api/analytics/transaction-types` | Transaction type aggregation |
+| GET | `/api/analytics/amount-tiers` | Amount tier aggregation |
+| GET | `/api/models/performance` | Held-out model evaluation metrics |
 
 ## Create a prediction
 
@@ -72,6 +77,15 @@ curl -X POST http://localhost:5000/api/predictions \
 ```
 
 The response contains `prediction` (the model result), `probability` (fraud-class probability), and `riskLevel` (a separate UI category: low below 40%, medium below 70%, high at or above 70%). Every successful result is stored in `predictions`; a database write failure is returned as an error and is never reported as a saved prediction.
+
+## Test a CSV file
+
+Send a `multipart/form-data` request with the CSV in a field named `file`. The file is limited to 5 MB and 500 data rows. It must include these columns: `step`, `type`, `amount`, `nameOrig`, `oldbalanceOrg`, `newbalanceOrig`, `nameDest`, `oldbalanceDest`, `newbalanceDest`, and `isFlaggedFraud`. Additional columns (such as the PaySim `isFraud` label) are ignored. Batch results are returned for review and are not written to prediction history.
+
+```bash
+curl -X POST "http://localhost:5000/api/predictions/csv?model=random_forest" \
+  -F "file=@transactions.csv"
+```
 
 ## History filtering
 
