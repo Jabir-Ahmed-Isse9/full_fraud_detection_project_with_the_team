@@ -1,0 +1,6 @@
+{
+  "name": "PaySim Fraud Intelligence",
+  "description": "Research-grade Financial Fraud Detection & Risk Analysis Platform powered by Logistic Regression and Random Forest machine learning models on the PaySim dataset.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
